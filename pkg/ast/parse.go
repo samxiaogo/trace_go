@@ -21,13 +21,14 @@ var (
 		Sel: DefaultSelIndent,
 	}
 	DefaultImportPath = "github.com/samxiaogo/trace_go"
+	ignoreField = "_"
 )
 
-func NewDeferCall(expr []ast.Expr)  *ast.DeferStmt{
+func NewDeferCall(expr []ast.Expr) *ast.DeferStmt {
 	return &ast.DeferStmt{
 		Call: &ast.CallExpr{
 			Fun: &ast.CallExpr{
-				Fun: DefaultSelectorExpr,
+				Fun:  DefaultSelectorExpr,
 				Args: expr,
 			},
 		},
@@ -91,7 +92,9 @@ func getFunDeclParams(node *ast.FuncDecl) (params []ast.Expr) {
 	}
 	for _, i := range node.Type.Params.List {
 		for _, d := range i.Names {
-			params = append(params, &ast.Ident{Name: d.Name})
+			if d.Name != ignoreField {
+				params = append(params, &ast.Ident{Name: d.Name})
+			}
 		}
 	}
 	return
