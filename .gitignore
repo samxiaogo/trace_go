@@ -5,6 +5,7 @@
 *.so
 *.dylib
 .idea
+cmds/generate/generate
 
 # Test binary, built with `go test -c`
 *.test
