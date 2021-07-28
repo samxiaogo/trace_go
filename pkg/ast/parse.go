@@ -87,17 +87,19 @@ func addDeferMethod(fileSet *token.FileSet, astFile *ast.File) (*token.FileSet, 
 
 // getFunDeclParams get the func declares params
 func getFunDeclParams(node *ast.FuncDecl) (params []ast.Expr) {
-	if node.Type == nil || node.Type.Params == nil || len(node.Type.Params.List) == 0 {
-		return
-	}
-	for _, i := range node.Type.Params.List {
-		for _, d := range i.Names {
-			if d.Name != ignoreField {
-				params = append(params, &ast.Ident{Name: d.Name})
-			}
-		}
-	}
 	return
+	// todo make it as cmd param
+	//if node.Type == nil || node.Type.Params == nil || len(node.Type.Params.List) == 0 {
+	//	return
+	//}
+	//for _, i := range node.Type.Params.List {
+	//	for _, d := range i.Names {
+	//		if d.Name != ignoreField {
+	//			params = append(params, &ast.Ident{Name: d.Name})
+	//		}
+	//	}
+	//}
+	//return
 }
 
 func checkExistSameDeferCall(node *ast.FuncDecl) (*ast.DeferStmt, bool) {
