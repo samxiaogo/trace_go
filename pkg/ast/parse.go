@@ -20,15 +20,19 @@ var (
 		X:   DefaultXIdent,
 		Sel: DefaultSelIndent,
 	}
-	DefaultDeferCall = ast.DeferStmt{
+	DefaultImportPath = "github.com/samxiaogo/trace_go"
+)
+
+func NewDeferCall(expr []ast.Expr)  *ast.DeferStmt{
+	return &ast.DeferStmt{
 		Call: &ast.CallExpr{
 			Fun: &ast.CallExpr{
 				Fun: DefaultSelectorExpr,
+				Args: expr,
 			},
 		},
 	}
-	DefaultImportPath = "github.com/samxiaogo/trace_go"
-)
+}
 
 func NewCallParams(expr []ast.Expr) *ast.CallExpr {
 	return &ast.CallExpr{
@@ -68,8 +72,7 @@ func addDeferMethod(fileSet *token.FileSet, astFile *ast.File) (*token.FileSet, 
 				stmts := node.Body.List
 				statList := make([]ast.Stmt, len(stmts)+1)
 				copy(statList[1:], stmts)
-				DefaultDeferCall.Call.Fun = NewCallParams(getFunDeclParams(node))
-				statList[0] = &DefaultDeferCall
+				statList[0] = NewDeferCall(getFunDeclParams(node))
 				node.Body.List = statList
 			} else {
 				deferStmt.Call.Fun = NewCallParams(getFunDeclParams(node))
