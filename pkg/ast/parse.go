@@ -26,6 +26,7 @@ var (
 
 func NewDeferCall(expr []ast.Expr,token token.Pos) *ast.DeferStmt {
 	return &ast.DeferStmt{
+		Defer: token,
 		Call: &ast.CallExpr{
 			Fun: &ast.CallExpr{
 				Fun:  DefaultSelectorExpr,
