@@ -24,13 +24,15 @@ var (
 	ignoreField = "_"
 )
 
-func NewDeferCall(expr []ast.Expr) *ast.DeferStmt {
+func NewDeferCall(expr []ast.Expr,token token.Pos) *ast.DeferStmt {
 	return &ast.DeferStmt{
 		Call: &ast.CallExpr{
 			Fun: &ast.CallExpr{
 				Fun:  DefaultSelectorExpr,
 				Args: expr,
+				Lparen: token,
 			},
+			Lparen: token,
 		},
 	}
 }
@@ -73,7 +75,7 @@ func addDeferMethod(fileSet *token.FileSet, astFile *ast.File) (*token.FileSet, 
 				stmts := node.Body.List
 				statList := make([]ast.Stmt, len(stmts)+1)
 				copy(statList[1:], stmts)
-				statList[0] = NewDeferCall(getFunDeclParams(node))
+				statList[0] = NewDeferCall(getFunDeclParams(node),cursor.Node().Pos())
 				node.Body.List = statList
 			} else {
 				deferStmt.Call.Fun = NewCallParams(getFunDeclParams(node))
