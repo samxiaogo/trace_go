@@ -21,27 +21,34 @@ var (
 		Sel: DefaultSelIndent,
 	}
 	DefaultImportPath = "github.com/samxiaogo/trace_go"
-	ignoreField = "_"
+	ignoreField       = "_"
 )
 
-func NewDeferCall(expr []ast.Expr,token token.Pos) *ast.DeferStmt {
-	return &ast.DeferStmt{
-		Defer: token,
-		Call: &ast.CallExpr{
-			Fun: &ast.CallExpr{
-				Fun:  DefaultSelectorExpr,
-				Args: expr,
-				Lparen: token,
-			},
-			Lparen: token,
+func NewSelector(tokenPos token.Pos) *ast.SelectorExpr {
+	return &ast.SelectorExpr{X: &ast.Ident{
+		NamePos: tokenPos,
+		Name:    DefaultXIdent.Name,
+	},
+		Sel: &ast.Ident{
+			NamePos: tokenPos,
+			Name:    DefaultSelIndent.Name,
 		},
 	}
 }
 
-func NewCallParams(expr []ast.Expr) *ast.CallExpr {
-	return &ast.CallExpr{
-		Fun:  DefaultSelectorExpr,
-		Args: expr,
+func NewDeferCall(expr []ast.Expr, token token.Pos) *ast.DeferStmt {
+	return &ast.DeferStmt{
+		Defer: token,
+		Call: &ast.CallExpr{
+			Fun: &ast.CallExpr{
+				Fun:    NewSelector(token),
+				Args:   expr,
+				Lparen: token,
+				Rparen: token,
+			},
+			Lparen: token,
+			Rparen: token,
+		},
 	}
 }
 
@@ -71,17 +78,25 @@ func addDeferMethod(fileSet *token.FileSet, astFile *ast.File) (*token.FileSet, 
 	var added = false
 	astutil.Apply(astFile, func(cursor *astutil.Cursor) bool {
 		if node, ok := cursor.Node().(*ast.FuncDecl); ok {
-			deferStmt, exist := checkExistSameDeferCall(node)
+			var (
+				deferStmt *ast.DeferStmt
+				exist     bool
+			)
+			params := getFunDeclParams(node, node.Pos())
+			deferStmt, exist = checkExistSameDeferCall(node)
 			if !exist {
 				stmts := node.Body.List
 				statList := make([]ast.Stmt, len(stmts)+1)
 				copy(statList[1:], stmts)
-				statList[0] = NewDeferCall(getFunDeclParams(node),cursor.Node().Pos())
+				statList[0] = NewDeferCall(params, node.Pos())
 				node.Body.List = statList
-			} else {
-				deferStmt.Call.Fun = NewCallParams(getFunDeclParams(node))
+				added = true
+			} else if deferStmt != nil {
+				if len(params) > 0 {
+					deferStmt = NewDeferCall(params, node.Pos())
+					added = true
+				}
 			}
-			added = true
 		}
 		return true
 	}, nil)
@@ -89,7 +104,7 @@ func addDeferMethod(fileSet *token.FileSet, astFile *ast.File) (*token.FileSet, 
 }
 
 // getFunDeclParams get the func declares params
-func getFunDeclParams(node *ast.FuncDecl) (params []ast.Expr) {
+func getFunDeclParams(node *ast.FuncDecl, tokenPos token.Pos) (params []ast.Expr) {
 	return
 	// todo make it as cmd param
 	//if node.Type == nil || node.Type.Params == nil || len(node.Type.Params.List) == 0 {
@@ -98,7 +113,7 @@ func getFunDeclParams(node *ast.FuncDecl) (params []ast.Expr) {
 	//for _, i := range node.Type.Params.List {
 	//	for _, d := range i.Names {
 	//		if d.Name != ignoreField {
-	//			params = append(params, &ast.Ident{Name: d.Name})
+	//			params = append(params, &ast.Ident{Name: d.Name,NamePos: tokenPos})
 	//		}
 	//	}
 	//}
